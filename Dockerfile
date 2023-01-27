@@ -29,11 +29,10 @@ RUN apt update && apt install gawk -y
 
 FROM java_gawk AS LVG
 
-RUN mkdir -p /{install,opt/metamap}
+RUN mkdir -p /opt/metamap
 
 WORKDIR /opt/metamap/
 
-#COPY ["./instalacao/lvg2022.tgz", "./instalacao/install_linux.sh", "/install/"]
 COPY ./instalacao/lvg2022.tgz .
 
 RUN tar -vzxf ./lvg2022.tgz 
@@ -50,7 +49,22 @@ ENV LVG_2022 /opt/metamap/lvg2022
 
 ENV PATH $LVG_2022/bin:$PATH
 
-RUN rm -rf /install
+COPY ./instalacao/lvg /opt/metamap/lvg2022/bin/
 
 # Instalar MetaMap
 
+FROM LVG AS METAMAP
+
+RUN apt update && apt install bzip2 -y
+
+WORKDIR /opt/metamap/
+
+COPY ./instalacao/public_mm_linux_main_2020.tar.bz2 /opt/metamap/
+
+RUN bunzip2 -c public_mm_linux_main_2020.tar.bz2 | tar xvf -
+
+WORKDIR /opt/metamap/public_mm/
+
+ENV PATH /opt/metamap/public_mm/bin:$PATH
+
+RUN ./bin/install.sh

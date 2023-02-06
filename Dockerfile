@@ -14,7 +14,9 @@ RUN rm -rf /install
 
 RUN mv /usr/lib/jvm/jre1.8.0_361 /usr/lib/jvm/jre
 
-ENV JAVA_HOME /usr/lib/jvm/jre
+RUN ln -s /usr/lib/jvm/jre /usr/lib/jvm/java-oracle
+
+ENV JAVA_HOME /usr/lib/jvm/java-oracle
 
 ENV PATH ${JAVA_HOME}/bin:$PATH
 
@@ -51,7 +53,9 @@ ENV PATH $LVG_2022/bin:$PATH
 
 COPY ./instalacao/lvg /opt/metamap/lvg2022/bin/
 
-# Instalar MetaMap
+######################################
+########## Instalar MetaMap ##########
+######################################
 
 FROM LVG AS METAMAP
 
@@ -68,3 +72,39 @@ WORKDIR /opt/metamap/public_mm/
 ENV PATH /opt/metamap/public_mm/bin:$PATH
 
 RUN ./bin/install.sh
+
+######################################
+######## Instalar MetaMap DFB ########
+######################################
+
+FROM METAMAP AS MM_DFB
+
+WORKDIR /opt/metamap/
+
+COPY ./instalacao/public_mm_linux_dfb_2021.tar.bz2 .
+
+RUN tar -jxvf public_mm_linux_dfb_2021.tar.bz2
+
+WORKDIR /opt/metamap/public_mm
+
+COPY ["./instalacao/install.sh", "./instalacao/install_dfb.sh", "./bin/"]
+
+RUN ./bin/install.sh
+
+######################################
+########### Modelo em PT_BR ##########
+######################################
+
+FROM MM_DFB
+
+WORKDIR /opt/metamap/public_mm
+
+RUN mkdir -p ./sourceData/UMLS_PORTUGUES/umls/
+
+COPY ["instalacao/2022AB/META/MRCONSO.RRF", "instalacao/2022AB/META/MRSAT.RRF", "instalacao/2022AB/META/MRSTY.RRF", "instalacao/2022AB/META/MRSAB.RRF", "instalacao/2022AB/META/MRRANK.RRF", "instalacao/2022AB/LEX/LEX_DB/SM.DB", "./sourceData/UMLS_PORTUGUES/umls/"]
+
+RUN ./bin/skrmedpostctl start
+
+COPY ["instalacao/builddatafiles.sh","./bin/"]
+
+RUN ./bin/BuildDataFiles

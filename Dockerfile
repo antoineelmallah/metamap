@@ -95,7 +95,7 @@ RUN ./bin/install.sh
 ########### Modelo em PT_BR ##########
 ######################################
 
-FROM MM_DFB
+FROM MM_DFB AS PASSO1
 
 WORKDIR /opt/metamap/public_mm
 
@@ -111,6 +111,42 @@ RUN ./bin/BuildDataFiles
 
 WORKDIR /opt/metamap/public_mm/sourceData/UMLS_PORTUGUES/01metawordindex
 
-COPY ["instalacao/01CreateWorkFiles", "."]
+COPY ["instalacao/01CreateWorkFiles", "instalacao/03FilterPrep", "instalacao/04FilterStrict", "./"]
 
-RUN chmod 777 ./01CreateWorkFiles && ./01CreateWorkFiles
+FROM PASSO1 AS PASSO2
+
+RUN chmod 777 ./01CreateWorkFiles ./02Suppress ./03FilterPrep ./04FilterStrict
+
+RUN ./01CreateWorkFiles && ./02Suppress && ./03FilterPrep
+
+WORKDIR /opt/metamap/public_mm
+
+RUN ./bin/skrmedpostctl start
+
+WORKDIR /opt/metamap/public_mm/sourceData/UMLS_PORTUGUES/01metawordindex
+
+RUN ./04FilterStrict && ./05GenerateMWIFiles
+
+FROM PASSO2 AS PASSO3
+
+WORKDIR /opt/metamap/public_mm/sourceData/UMLS_PORTUGUES/02treecodes
+
+RUN ./01GenerateTreecodes
+
+WORKDIR /opt/metamap/public_mm/sourceData/UMLS_PORTUGUES/03variants
+
+RUN ./01GenerateVariants
+
+WORKDIR /opt/metamap/public_mm/sourceData/UMLS_PORTUGUES/04synonyms
+
+RUN ./01GenerateSynonyms
+
+WORKDIR /opt/metamap/public_mm/sourceData/UMLS_PORTUGUES/05abbrAcronyms
+
+RUN ./01GenerateAbbrAcronyms
+
+WORKDIR /opt/metamap/public_mm/
+
+COPY ["instalacao/loaddatafiles.sh", "./bin/"]
+
+RUN ./bin/LoadDataFiles

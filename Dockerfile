@@ -108,3 +108,9 @@ RUN ./bin/skrmedpostctl start
 COPY ["instalacao/builddatafiles.sh","./bin/"]
 
 RUN ./bin/BuildDataFiles
+
+WORKDIR /opt/metamap/public_mm/sourceData/UMLS_PORTUGUES/01metawordindex
+
+COPY ["instalacao/01CreateWorkFiles", "."]
+
+RUN chmod 777 ./01CreateWorkFiles && ./01CreateWorkFiles

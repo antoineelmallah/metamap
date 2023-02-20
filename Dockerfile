@@ -2,7 +2,7 @@
 ############ Instalar Java ###########
 ######################################
 
-FROM ubuntu:22.04 AS java_gawk
+FROM debian:stable-slim AS java_gawk
 
 RUN bash -c 'mkdir -p /{usr/lib/jvm,install}'
 
@@ -23,7 +23,7 @@ ENV PATH ${JAVA_HOME}/bin:$PATH
 ENV CLASSPATH ${JAVA_HOME}/lib/tools.jar:$CLASSPATH
 
 # Instalar o gawk
-RUN apt update && apt install gawk -y
+RUN apt-get update && apt-get install gawk -y
 
 ######################################
 ############ Instalar LVG ############
@@ -59,7 +59,7 @@ COPY ./instalacao/lvg /opt/metamap/lvg2022/bin/
 
 FROM LVG AS METAMAP
 
-RUN apt update && apt install bzip2 -y
+RUN apt-get update && apt-get install bzip2 -y
 
 WORKDIR /opt/metamap/
 
@@ -81,9 +81,9 @@ FROM METAMAP AS MM_DFB
 
 WORKDIR /opt/metamap/
 
-COPY ./instalacao/public_mm_linux_dfb_2021.tar.bz2 .
+COPY ./instalacao/public_mm_linux_dfb_2022.tar.bz2 .
 
-RUN tar -jxvf public_mm_linux_dfb_2021.tar.bz2
+RUN tar -jxvf public_mm_linux_dfb_2022.tar.bz2
 
 WORKDIR /opt/metamap/public_mm
 
